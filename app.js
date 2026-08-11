@@ -110,6 +110,10 @@ try { (function () {
       if (typeof s.round !== "number" || !isFinite(s.round) || s.round < 1) s.round = 1;
       if (!isObj(s.best)) s.best = {};
       if (!Array.isArray(s.collections) || !s.collections.length) s.collections = d.collections.slice();
+      // 兼容旧版：若本地缓存的 collection id 在当前文集里不存在（如旧版 cy），重置为默认
+      var validColIds = COLLECTIONS.map(function (c) { return c.id; });
+      s.collections = s.collections.filter(function (id) { return validColIds.indexOf(id) >= 0; });
+      if (!s.collections.length) s.collections = d.collections.slice();
       if (typeof s.lastView !== "string") s.lastView = d.lastView;
       if (typeof s.studyIdx !== "number" || !isFinite(s.studyIdx)) s.studyIdx = 0;
       return s;
