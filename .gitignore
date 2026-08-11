@@ -4,5 +4,10 @@ _audio_gen.log
 _render_test.js
 _serve*.js
 
+# 截图 / 无头渲染临时文件
+_shot*.png
+_shot*.js
+_shot*.log
+
 # Windows 垃圾文件
 nul
