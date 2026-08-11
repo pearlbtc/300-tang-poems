@@ -1,5 +1,5 @@
 /* 600个绝美的诗词成语在线学习小工具 — Service Worker：离线缓存，让网页版在手机上像原生 App 一样可用 */
-const CACHE = "tang300-v10";  // v10: 统一命名为“唐诗300首，记住300句”，包括PDF、小工具标题、manifest等
+const CACHE = "tang300-v11";  // v11: 修复首页文字错误：将“记待二百句”改为“记住三百句”
 const CORE = [
   "./",
   "index.html",
