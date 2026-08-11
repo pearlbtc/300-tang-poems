@@ -1,0 +1,8 @@
+# 临时日志 / 临时脚本
+_audio_gen.log
+*.log
+_render_test.js
+_serve*.js
+
+# Windows 垃圾文件
+nul
