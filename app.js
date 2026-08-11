@@ -1,5 +1,5 @@
 /* ============================================================
- * 唐诗300首最应该背诵的300句学习小工具（纯前端 H5 原型）
+ * 唐诗300首，记住300句 - 学习小工具（纯前端 H5 原型）
  * 形态：先原型后全栈。当前用 localStorage + 内存数据；
  *       api 层已抽象，后续把方法体换成 fetch 即可平滑升级为全栈。
  * 登录：游客占位，微信/手机号接口预留（见 me 页占位按钮）。
@@ -428,7 +428,7 @@ try { (function () {
 
     var html = "";
     html += '<div class="progress">唐诗名句库 · 共 ' + list.length + " 条</div>";
-    html += '<div class="lib-cover"><img src="assets/cover.jpg" alt="唐诗三百首必背300句，每一句都该刻进记忆" /></div>';
+    html += '<div class="lib-cover"><img src="assets/cover.jpg" alt="唐诗300首，记住300句，每一句都该刻进记忆" /></div>';
     html += '<div class="lib-search"><input id="libQ" placeholder="搜索词条 / 释义 / 出处…" value="' + libQ.replace(/"/g, "&quot;") + '" /></div>';
     html += '<div class="lib-cats" id="libCats">';
     html += '<span class="lib-cat' + (libCat === "all" ? " on" : "") + '" data-c="all">全部</span>';
