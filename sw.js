@@ -1,5 +1,5 @@
 /* 600个绝美的诗词成语在线学习小工具 — Service Worker：离线缓存，让网页版在手机上像原生 App 一样可用 */
-const CACHE = "tang300-v6";  // v6: 首页文字改为竖写“记住三百句”（放在标题右侧）
+const CACHE = "tang300-v7";  // v7: 调整“记住300句”位置（与标题隔开+下移）+ 保留李白画像
 const CORE = [
   "./",
   "index.html",
