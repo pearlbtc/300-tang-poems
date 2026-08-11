@@ -1,5 +1,5 @@
 /* 600个绝美的诗词成语在线学习小工具 — Service Worker：离线缓存，让网页版在手机上像原生 App 一样可用 */
-const CACHE = "tang300-v3";  // v3: 拼音规范修正（轻骑/一骑→qí，鬓毛衰→shuāi）
+const CACHE = "tang300-v4";  // v4: 替换所有卷首图和首页图为各主题匹配的水墨画
 const CORE = [
   "./",
   "index.html",
