@@ -1,5 +1,5 @@
 /* 600个绝美的诗词成语在线学习小工具 — Service Worker：离线缓存，让网页版在手机上像原生 App 一样可用 */
-const CACHE = "tang300-v12";  // v12: 知行学习包升级：mp3 放行 / 手势内 play / 微信提示 / 书名同步
+const CACHE = "tang300-v13";  // v13: 微信提示改文档流，不再遮挡顶部标题
 const CORE = [
   "./",
   "index.html",

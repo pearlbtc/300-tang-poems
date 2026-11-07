@@ -851,13 +851,14 @@ try { (function () {
   }
 
   /* ---------------- 启动 ---------------- */
-  // 微信环境提示：微信内置浏览器对 HTML5 音频/TTS 支持差，提前告知用户
+  // 微信环境提示：用文档流首元素，避免 fixed 定位压住顶部品牌标题
   try {
     if (/MicroMessenger/i.test(navigator.userAgent)) {
       var _wx = document.createElement("div");
-      _wx.style.cssText = "position:fixed;top:0;left:0;right:0;background:#b8860b;color:#fff;font-size:12.5px;line-height:1.55;padding:7px 12px;z-index:9998;text-align:center;";
+      _wx.id = "wxTip";
+      _wx.style.cssText = "background:#b8860b;color:#fff;font-size:12.5px;line-height:1.55;padding:7px 12px;text-align:center;";
       _wx.innerHTML = "⚠ 微信内朗读可能无声，点右上角 ⋮ →「在浏览器打开」体验更佳";
-      document.body.appendChild(_wx);
+      document.body.insertBefore(_wx, document.body.firstChild);
     }
   } catch (e) {}
   try {
