@@ -1,5 +1,5 @@
 /* ============================================================
- * 唐诗300首，记住300句 - 学习小工具（纯前端 H5 原型）
+ * 唐诗300首，最绝300句 - 学习小工具（纯前端 H5 原型）
  * 形态：先原型后全栈。当前用 localStorage + 内存数据；
  *       api 层已抽象，后续把方法体换成 fetch 即可平滑升级为全栈。
  * 登录：游客占位，微信/手机号接口预留（见 me 页占位按钮）。
@@ -198,7 +198,8 @@ try { (function () {
     return pool.map(function (e) { return e.id; });
   }
 
-  // 把词条拆成 token，随机挖空（汉字数=4 挖2、=8 挖4，其余挖约半数）
+  // 把词条拆成 token，随机挖空：整条汉字数 ≤8 留 1 个字，>8 留 2 个字
+  // ★按产品可调：下面的 8 / 1 / 2 是「知行学习包」默认规则
   function makeQuestion(entry) {
     var tokens = [];
     var hanIdx = [];
@@ -207,8 +208,8 @@ try { (function () {
       if (HAN.test(ch)) { tokens.push({ ch: ch, punct: false }); hanIdx.push(tokens.length - 1); }
       else { tokens.push({ ch: ch, punct: true }); }
     }
-    // 填空字数：短词（成语等）保持挖约半数；诗句等较长句子最多挖 4 字，避免长句全空难答
-    var hideCount = Math.min(Math.round(entry.chars / 2), 4);
+    // 填空字数：按整条汉字数（entry.chars，不含标点）决定；min 兜底防异常数据
+    var hideCount = Math.min(entry.chars <= 8 ? 1 : 2, hanIdx.length);
     var shuffled = hanIdx.slice().sort(function () { return Math.random() - 0.5; });
     var hideSet = {};
     shuffled.slice(0, hideCount).forEach(function (i) { hideSet[i] = true; });
@@ -359,8 +360,23 @@ try { (function () {
   if ("speechSynthesis" in window) {
     window.speechSynthesis.onvoiceschanged = function () { _zhVoice = pickZhVoice(); };
   }
+  // 轻量 toast 提示：微信内失败不再静默，用户能看到发生了什么
+  function showToast(msg, ms) {
+    try {
+      var t = document.getElementById("__toast");
+      if (!t) {
+        t = document.createElement("div");
+        t.id = "__toast";
+        t.style.cssText = "position:fixed;left:50%;bottom:86px;transform:translateX(-50%);max-width:86%;background:rgba(0,0,0,.82);color:#fff;font-size:13px;line-height:1.5;padding:9px 14px;border-radius:10px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .2s;text-align:center;";
+        document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity = "1";
+      clearTimeout(t._t); t._t = setTimeout(function () { t.style.opacity = "0"; }, ms || 2800);
+    } catch (e) {}
+  }
+  // 返回 true 表示确实尝试发起了 TTS（便于判断是否还有兜底）
   function speakFallback(text) {
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window)) return false;
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -368,7 +384,8 @@ try { (function () {
       var v = _zhVoice || pickZhVoice();
       if (v) u.voice = v;
       window.speechSynthesis.speak(u);
-    } catch (e) {}
+      return true;
+    } catch (e) { return false; }
   }
   var _curAudio = null;
   var _curFallbackTimer = null;
@@ -377,31 +394,67 @@ try { (function () {
     if (_curFallbackTimer) { clearTimeout(_curFallbackTimer); _curFallbackTimer = null; }
     if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
   }
-  var AUDIO_MAX_ID = 300;  // 全部 300 条词条均有预生成音频
-  var AUDIO_V = 1;         // 音频缓存版本：初版
+  // ★按产品改：AUDIO_MAX_ID 改为动态取最大 id，免去逐产品手改
+  var AUDIO_MAX_ID = ENTRIES.reduce(function (m, e) { return Math.max(m, e.id || 0); }, 0);
+  var AUDIO_V = 1;         // 音频缓存版本：每次重新生成 audio/ 后 +1，破浏览器/微信缓存
   function playRecite(id, text) {
     if (!text && id == null) return;
+    var btn = document.getElementById("reciteBtn");
+    var setBtn = function (s) { if (btn) btn.textContent = s; };
     stopRecite();
-    if (id == null || id > AUDIO_MAX_ID) { speakFallback(text); return; }
+    if (id == null || id > AUDIO_MAX_ID) {
+      var f0 = speakFallback(text);
+      showToast(f0 ? "已用语音朗读（微信内可能无声）" : "当前环境不支持语音，请用系统浏览器打开");
+      return;
+    }
+    setBtn("♪ 朗读中…");
     var au = new Audio("audio/" + id + ".mp3?v=" + AUDIO_V);
+    // 微信 X5 / iOS 内嵌 WebView：需这些属性，否则可能不播或被系统播放器劫持
+    au.setAttribute("playsinline", "");
+    au.setAttribute("webkit-playsinline", "");
+    au.setAttribute("x5-playsinline", "");
+    au.preload = "auto";
     _curAudio = au;
-    _curFallbackTimer = setTimeout(function () {
-      _curFallbackTimer = null;
-      if (_curAudio === au) { try { _curAudio.pause(); _curAudio.src = ""; } catch (e) {} _curAudio = null; }
-      speakFallback(text);
-    }, 1800);
-    au.oncanplay = function () {
+    try { document.body.appendChild(au); } catch (e) {}
+    try { au.load(); } catch (e) {}
+    var done = false;
+    function succeed() {
+      if (done) return; done = true;
       if (_curFallbackTimer) { clearTimeout(_curFallbackTimer); _curFallbackTimer = null; }
       if ("speechSynthesis" in window) { try { window.speechSynthesis.cancel(); } catch (e) {} }
-      au.play();
-    };
-    au.onerror = function () {
+      setBtn("🔊 诵读");
+    }
+    function fail(reason) {
+      if (done) return; done = true;
       if (_curFallbackTimer) { clearTimeout(_curFallbackTimer); _curFallbackTimer = null; }
       if (_curAudio === au) _curAudio = null;
-      speakFallback(text);
-    };
-    au.onended = function () { if (_curAudio === au) _curAudio = null; };
-    au.load();
+      var ok = speakFallback(text);
+      if (!("speechSynthesis" in window) || !ok) {
+        setBtn("⚠ 无法朗读");
+        showToast("音频未播放，且当前环境不支持语音。点右上角 ⋮ →「在浏览器打开」");
+      } else {
+        setBtn("🔊 诵读");
+        showToast("音频未播放，已尝试语音朗读（微信内可能无声，建议在浏览器打开）");
+      }
+    }
+    // 5s 兜底：若其实已经在播（X5 有时不触发 oncanplay），不要误判
+    _curFallbackTimer = setTimeout(function () {
+      if (_curAudio && !_curAudio.paused && _curAudio.currentTime > 0) { succeed(); return; }
+      fail("timeout");
+    }, 5000);
+    au.oncanplay = succeed;
+    au.onerror = function () { fail("error"); };
+    au.onended = function () { setBtn("🔊 诵读"); };
+    // ★关键：在用户点击的同步栈内直接 play()，满足 iOS/移动端 autoplay 手势策略
+    var p = au.play();
+    if (p && p.catch) {
+      p.catch(function () {
+        // 手势内 play 被拒，等可播放再补一次
+        au.addEventListener("canplay", function () {
+          var pp = au.play(); if (pp && pp.catch) pp.catch(function () {});
+        }, { once: true });
+      });
+    }
   }
 
   /* ---------------- 唐诗名句库（第一栏） ---------------- */
@@ -428,7 +481,7 @@ try { (function () {
 
     var html = "";
     html += '<div class="progress">唐诗名句库 · 共 ' + list.length + " 条</div>";
-    html += '<div class="lib-cover"><img src="assets/cover.jpg" alt="唐诗300首，记住300句，每一句都该刻进记忆" /></div>';
+    html += '<div class="lib-cover"><img src="assets/cover.jpg" alt="唐诗300首，最绝300句" /></div>';
     html += '<div class="lib-search"><input id="libQ" placeholder="搜索词条 / 释义 / 出处…" value="' + libQ.replace(/"/g, "&quot;") + '" /></div>';
     html += '<div class="lib-cats" id="libCats">';
     html += '<span class="lib-cat' + (libCat === "all" ? " on" : "") + '" data-c="all">全部</span>';
@@ -798,6 +851,15 @@ try { (function () {
   }
 
   /* ---------------- 启动 ---------------- */
+  // 微信环境提示：微信内置浏览器对 HTML5 音频/TTS 支持差，提前告知用户
+  try {
+    if (/MicroMessenger/i.test(navigator.userAgent)) {
+      var _wx = document.createElement("div");
+      _wx.style.cssText = "position:fixed;top:0;left:0;right:0;background:#b8860b;color:#fff;font-size:12.5px;line-height:1.55;padding:7px 12px;z-index:9998;text-align:center;";
+      _wx.innerHTML = "⚠ 微信内朗读可能无声，点右上角 ⋮ →「在浏览器打开」体验更佳";
+      document.body.appendChild(_wx);
+    }
+  } catch (e) {}
   try {
     if (!ENTRIES.length) {
       view.innerHTML = '<div class="empty">数据未加载（ENTRIES 为空）。<br>请确认 data.js 与 index.html 在同一目录，并刷新页面。</div>';

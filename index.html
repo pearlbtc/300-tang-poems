@@ -6,15 +6,15 @@
 <meta name="theme-color" content="#7a5230" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="唐诗300首，记住300句" />
-<title>唐诗300首，记住300句 - 学习小工具</title>
+<meta name="apple-mobile-web-app-title" content="唐诗300首，最绝300句" />
+<title>唐诗300首，最绝300句 - 学习小工具</title>
 <link rel="manifest" href="manifest.webmanifest" />
 <link rel="apple-touch-icon" href="icons/icon-192.png" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="app-header">
-    <div class="brand">唐诗300首，记住300句</div>
+    <div class="brand">唐诗300首，最绝300句</div>
     <div class="sub">唐诗名句 · 每日一练</div>
   </header>
 
@@ -42,8 +42,8 @@
   </div>
 
   <!-- 数据先加载，再加载逻辑；file:// 协议下不能加 crossorigin，否则同目录脚本会被 CORS 拒绝 -->
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <script src="data.js?v=12"></script>
+  <script src="app.js?v=12"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {

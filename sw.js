@@ -1,5 +1,5 @@
 /* 600个绝美的诗词成语在线学习小工具 — Service Worker：离线缓存，让网页版在手机上像原生 App 一样可用 */
-const CACHE = "tang300-v11";  // v11: 修复首页文字错误：将“记待二百句”改为“记住三百句”
+const CACHE = "tang300-v12";  // v12: 知行学习包升级：mp3 放行 / 手势内 play / 微信提示 / 书名同步
 const CORE = [
   "./",
   "index.html",
@@ -48,21 +48,11 @@ self.addEventListener("fetch", function (e) {
   if (req.method !== "GET") return;
   var url = new URL(req.url);
 
-  // 音频：首次播放时运行时缓存（缓存优先，省流量、离线可听）
-  if (url.pathname.endsWith(".mp3")) {
-    e.respondWith(
-      caches.open(CACHE).then(function (c) {
-        return c.match(req).then(function (hit) {
-          if (hit) return hit;
-          return fetch(req).then(function (res) {
-            if (res && res.ok) c.put(req, res.clone());
-            return res;
-          });
-        });
-      }).catch(function () { return fetch(req); })
-    );
-    return;
-  }
+  // 音频：不再经 SW 拦截。SW 拦截媒体请求时无法正确处理 HTTP Range 头，
+  // Chromium 会因此中止请求 (ERR_ABORTED)，表现为“朗诵无语音”。
+  // 直接放行交由浏览器原生 + GitHub CDN 处理即可正常流式播放。
+  if (url.pathname.endsWith(".mp3")) return;
+
 
   // JS/CSS/HTML：网络优先（确保用户永远拿到最新代码）；网络失败才回退缓存
   var isCode = url.pathname.endsWith(".js") || url.pathname.endsWith(".css") || url.pathname.endsWith(".html") || url.pathname === "/" || url.pathname.endsWith("/");
